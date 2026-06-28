@@ -1,0 +1,11 @@
+{
+  "name": "chatbox",
+  "version": "1.0.0",
+  "main": "server.js",
+  "dependencies": {
+    "express": "^4.18.2",
+    "socket.io": "^4.6.1",
+    "mongoose": "^8.0.0",
+    "ioredis": "^5.3.2"
+  }
+}

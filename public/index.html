@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ChatBox</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: sans-serif;
+        background: #f0f2f5;
+        display: flex;
+        flex-direction: column;
+        height: 100vh;
+      }
+      #login {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        align-items: center;
+        justify-content: center;
+        height: 100vh;
+      }
+      #login input {
+        padding: 10px 16px;
+        font-size: 16px;
+        border: 1px solid #ccc;
+        border-radius: 8px;
+        width: 280px;
+      }
+      #login button {
+        padding: 10px 24px;
+        background: #0084ff;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 16px;
+      }
+      #chat {
+        display: none;
+        flex-direction: column;
+        height: 100vh;
+      }
+      #header {
+        background: #0084ff;
+        color: white;
+        padding: 16px;
+        font-size: 18px;
+        font-weight: bold;
+      }
+      #messages {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .msg {
+        max-width: 70%;
+        padding: 10px 14px;
+        border-radius: 18px;
+        line-height: 1.4;
+      }
+      .msg.mine {
+        align-self: flex-end;
+        background: #0084ff;
+        color: white;
+      }
+      .msg.other {
+        align-self: flex-start;
+        background: white;
+        color: #222;
+      }
+      .msg .name {
+        font-size: 11px;
+        opacity: 0.7;
+        margin-bottom: 4px;
+      }
+      #form {
+        display: flex;
+        padding: 12px;
+        gap: 8px;
+        background: white;
+        border-top: 1px solid #eee;
+      }
+      #input {
+        flex: 1;
+        padding: 10px 16px;
+        border: 1px solid #ccc;
+        border-radius: 24px;
+        font-size: 15px;
+      }
+      #form button {
+        padding: 10px 20px;
+        background: #0084ff;
+        color: white;
+        border: none;
+        border-radius: 24px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="login">
+      <h2>ChatBox</h2>
+      <input id="username" placeholder="ใส่ชื่อของคุณ" />
+      <button onclick="joinChat()">เข้าห้อง Chat</button>
+    </div>
+
+    <div id="chat">
+      <div id="header">ChatBox</div>
+      <div id="messages"></div>
+      <form id="form">
+        <input id="input" placeholder="พิมพ์ข้อความ..." autocomplete="off" />
+        <button type="submit">ส่ง</button>
+      </form>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+      let username = "";
+      const socket = io();
+
+      function joinChat() {
+        username = document.getElementById("username").value.trim();
+        if (!username) return;
+        document.getElementById("login").style.display = "none";
+        document.getElementById("chat").style.display = "flex";
+      }
+
+      function addMessage(data, isMine) {
+        const div = document.createElement("div");
+        div.className = "msg " + (isMine ? "mine" : "other");
+        // ใช้ textContent แทน innerHTML เพื่อป้องกัน XSS
+        const name = document.createElement("div");
+        name.className = "name";
+        name.textContent = data.username;
+        const text = document.createTextNode(data.text);
+        div.appendChild(name);
+        div.appendChild(text);
+        document.getElementById("messages").appendChild(div);
+        document.getElementById("messages").scrollTop = 9999;
+      }
+
+      socket.on("history", (messages) => {
+        messages.forEach((m) => addMessage(m, m.username === username));
+      });
+
+      socket.on("message", (data) => {
+        addMessage(data, data.username === username);
+      });
+
+      document.getElementById("form").addEventListener("submit", (e) => {
+        e.preventDefault();
+        const text = document.getElementById("input").value.trim();
+        if (!text) return;
+        socket.emit("message", { username, text });
+        document.getElementById("input").value = "";
+      });
+    </script>
+  </body>
+</html>
